@@ -4,10 +4,19 @@ CREATE TABLE users (
     email           VARCHAR(100) NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
     shipping_addr   VARCHAR(255),
-    billing_addr    VARCHAR(255),
-    card_number     VARCHAR(16),
-    card_cvv        VARCHAR(4),
-    card_exp_date   DATE
+    billing_addr    VARCHAR(255)
+);
+
+CREATE TABLE cards (
+    card_number     VARCHAR(16) PRIMARY KEY,
+    card_cvv        VARCHAR(4) NOT NULL,
+    card_exp_date   DATE NOT NULL
+);
+
+CREATE TABLE user_cards (
+    user_id         INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    card_number     VARCHAR(16) NOT NULL REFERENCES cards(card_number) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, card_number)
 );
 
 CREATE TABLE sellers (
@@ -54,6 +63,7 @@ CREATE TABLE reviews (
     UNIQUE (user_id, item_id)
 );
 
+CREATE INDEX idx_user_cards_card ON user_cards(card_number);
 CREATE INDEX idx_items_seller ON items(seller_id);
 CREATE INDEX idx_orders_user  ON orders(user_id);
 CREATE INDEX idx_orders_item  ON orders(item_id);
