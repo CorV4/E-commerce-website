@@ -1,5 +1,5 @@
-"""Password hashing with the standard library's scrypt (no extra dependency).
-
+"""
+Password hashing using scrypt.
 Stored format: "scrypt$<salt hex>$<hash hex>".
 """
 
@@ -9,12 +9,10 @@ import secrets
 
 _N, _R, _P = 2**14, 8, 1
 
-
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
     digest = hashlib.scrypt(password.encode(), salt=salt, n=_N, r=_R, p=_P)
     return f"scrypt${salt.hex()}${digest.hex()}"
-
 
 def verify_password(password: str, stored: str) -> bool:
     try:

@@ -1,8 +1,8 @@
-"""Database connection layer.
+"""DB connection layer.
 
-Every request borrows one connection from the pool. The connection runs one
-transaction: it commits when the endpoint returns normally and rolls back if
-the endpoint raises (including HTTPException).
+Every goes through here and borrows one connection from the pool. Then the connection runs one
+transaction, committing only when the endpoint returns normally and rolls back if
+the endpoint raises an exception.
 """
 
 import os
@@ -19,15 +19,10 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ecommerce")
 
-# open=False: the pool is opened by the app's lifespan in main.py, not at import.
-# dict_row: rows come back as dicts, e.g. {"user_id": 1, "username": "..."}.
 pool = ConnectionPool(DATABASE_URL, kwargs={"row_factory": dict_row}, open=False)
-
 
 def get_conn() -> Iterator[Connection]:
     with pool.connection() as conn:
         yield conn
 
-
-# Use as an endpoint parameter type: def endpoint(conn: Conn): ...
 Conn = Annotated[Connection, Depends(get_conn)]

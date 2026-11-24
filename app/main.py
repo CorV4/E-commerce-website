@@ -1,10 +1,12 @@
+"""
+Main FastAPI app. It creates the app, opens/closes the DB connection pool, and registers routers.
+
+"""
+
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
-
 from app.db import Conn, pool
 from app.routers import users
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -12,16 +14,13 @@ async def lifespan(app: FastAPI):
     yield
     pool.close()
 
-
 app = FastAPI(title="E-commerce Platform", lifespan=lifespan)
 
 app.include_router(users.router)
 
-
 @app.get("/")
 def root():
     return {"status": "ok"}
-
 
 @app.get("/health/db")
 def health_db(conn: Conn):

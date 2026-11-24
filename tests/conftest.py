@@ -1,5 +1,4 @@
-"""Test setup.
-
+"""
 Tests run against a separate database (TEST_DATABASE_URL). At the start of the
 run its public schema is dropped and rebuilt from sql/schema.sql, and every
 table is emptied before each test. The database name must end in "_test" so a
