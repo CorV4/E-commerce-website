@@ -11,6 +11,7 @@ from app.security import hash_password, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+# Helper error functions
 def _not_found() -> HTTPException:
     return HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
 
@@ -143,6 +144,16 @@ def close_account(user_id: int, conn: Conn):
         """
         UPDATE items SET is_listed = false
         WHERE seller_id IN (SELECT seller_id FROM sellers WHERE user_id = %s)
+        """,
+        (user_id,),
+    )
+    # Unlisted items can't be bought, so take them out of other shoppers' carts too.
+    conn.execute(
+        """
+        DELETE FROM cart
+        WHERE item_id IN (SELECT i.item_id FROM items i
+                          JOIN sellers s ON s.seller_id = i.seller_id
+                          WHERE s.user_id = %s)
         """,
         (user_id,),
     )

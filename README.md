@@ -75,3 +75,41 @@ Copy the pattern in `app/routers/users.py`:
 | GET    | `/users/{id}`  | SELECT          | View one user               |
 | PATCH  | `/users/{id}`  | UPDATE          | Edit only the fields sent   |
 | DELETE | `/users/{id}`  | DELETE + UPDATE | Close account (soft delete) |
+
+### Sellers
+
+| Method | Path                  | SQL    | Purpose                                         |
+| ------ | --------------------- | ------ | ----------------------------------------------- |
+| POST   | `/sellers`            | INSERT | Register a store for a user (one per user)      |
+| GET    | `/sellers`            | SELECT | List stores                                     |
+| GET    | `/sellers/{id}`       | SELECT | View one store                                  |
+| PATCH  | `/sellers/{id}`       | UPDATE | Edit store name or bank account number          |
+| GET    | `/sellers/{id}/items` | SELECT | The store's listings, including unlisted items  |
+
+`bank_acc_number` is never returned. Stores of closed accounts are hidden.
+
+### Items
+
+| Method | Path          | SQL             | Purpose                                                  |
+| ------ | ------------- | --------------- | -------------------------------------------------------- |
+| POST   | `/items`      | INSERT          | List an item for sale                                    |
+| GET    | `/items`      | SELECT          | Browse items for sale (`?search=`)                       |
+| GET    | `/items/{id}` | SELECT          | View one item (works for unlisted items too)             |
+| PATCH  | `/items/{id}` | UPDATE          | Edit only the fields sent; `is_listed` relists/unlists   |
+| DELETE | `/items/{id}` | UPDATE + DELETE | Unlist the item and remove it from every cart            |
+
+Items are never deleted, because orders point to them. Unlisting sets `is_listed = false`.
+
+### Cart
+
+| Method | Path                            | SQL    | Purpose                                          |
+| ------ | ------------------------------- | ------ | ------------------------------------------------ |
+| GET    | `/users/{id}/cart`              | SELECT | View the cart with line totals and a cart total  |
+| POST   | `/users/{id}/cart`              | INSERT | Add an item (adds to the quantity if present)    |
+| PATCH  | `/users/{id}/cart/{item_id}`    | UPDATE | Change an item's quantity                        |
+| DELETE | `/users/{id}/cart/{item_id}`    | DELETE | Remove one item                                  |
+| DELETE | `/users/{id}/cart`              | DELETE | Clear the cart                                   |
+
+Only listed items can be added, and sellers can't add their own items.
+
+Prices are returned as JSON numbers (e.g. `12.5`).
