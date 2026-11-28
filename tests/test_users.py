@@ -31,8 +31,9 @@ def test_password_is_stored_hashed(client):
 
     with psycopg.connect(TEST_DATABASE_URL) as conn:
         (stored,) = conn.execute("SELECT password_hash FROM users").fetchone()
-    assert stored.startswith("scrypt$")
+    assert len(stored) == 64
     assert "correct-horse" not in stored
+    assert run_sql("SELECT encode(sha256('correct-horse'), 'hex')") == [(stored,)]
 
 
 def test_duplicate_username_or_email_is_409(client):
