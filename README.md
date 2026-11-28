@@ -8,29 +8,29 @@ Three-tier web app: frontend → FastAPI (Python) → PostgreSQL.
 app/
   main.py          FastAPI app, connection pool lifecycle, router registration
   db.py            Connection pool + `Conn` dependency (one transaction per request)
-  security.py      Password hashing (stdlib scrypt)
+  security.py      Password hashing
   schemas/         Pydantic request/response models, one file per resource
   routers/         Endpoints with SQL, one file per resource
 sql/
-  schema.sql       CREATE TABLE statements
-  sampleData.sql   INSERT statements (15+ rows per table)
-tests/             pytest suite; runs against a separate _test database
+  schema.sql       Database schema
+  sampleData.sql   Database sample data
+tests/             pytest suite that runs against a separate _test database
 ```
 
 ## Setup
 
 1. Create a virtual environment and install dependencies:
    ```bash
-      python3 -m venv .venv
-      source .venv/bin/activate
-      pip install -r requirements.txt
+       python3 -m venv .venv
+       source .venv/bin/activate
+       pip install -r requirements.txt
    ```
 2. Create the two databases and load the schema into the dev one:
    ```bash
-      createdb ecommerce
-      createdb ecommerce_test
-      psql -d ecommerce -f sql/schema.sql
-      psql -d ecommerce -f sql/sampleData.sql
+       createdb ecommerce
+       createdb ecommerce_test
+       psql -d ecommerce -f sql/schema.sql
+       psql -d ecommerce -f sql/sampleData.sql
    ```
 3. Copy `.env.example` to `.env` and fill in your Postgres username and password.
 
@@ -65,7 +65,7 @@ Copy the pattern in `app/routers/users.py`:
 4. Register it in `app/main.py` with `app.include_router(...)`.
 5. Add `tests/test_<resource>.py`.
 
-## Endpoints so far
+# Endpoints
 
 | Method | Path           | SQL             | Purpose                     |
 | ------ | -------------- | --------------- | --------------------------- |
@@ -90,13 +90,13 @@ Copy the pattern in `app/routers/users.py`:
 
 ### Items
 
-| Method | Path          | SQL             | Purpose                                                  |
-| ------ | ------------- | --------------- | -------------------------------------------------------- |
-| POST   | `/items`      | INSERT          | List an item for sale                                    |
-| GET    | `/items`      | SELECT          | Browse items for sale (`?search=`)                       |
-| GET    | `/items/{id}` | SELECT          | View one item (works for unlisted items too)             |
-| PATCH  | `/items/{id}` | UPDATE          | Edit only the fields sent; `is_listed` relists/unlists   |
-| DELETE | `/items/{id}` | UPDATE + DELETE | Unlist the item and remove it from every cart            |
+| Method | Path          | SQL             | Purpose                                                |
+| ------ | ------------- | --------------- | ------------------------------------------------------ |
+| POST   | `/items`      | INSERT          | List an item for sale                                  |
+| GET    | `/items`      | SELECT          | Browse items for sale (`?search=`)                     |
+| GET    | `/items/{id}` | SELECT          | View one item (works for unlisted items too)           |
+| PATCH  | `/items/{id}` | UPDATE          | Edit only the fields sent, `is_listed` relists/unlists |
+| DELETE | `/items/{id}` | UPDATE + DELETE | Unlist the item and remove it from every cart          |
 
 Items are never deleted, because orders point to them. Unlisting sets `is_listed = false`.
 
@@ -113,3 +113,34 @@ Items are never deleted, because orders point to them. Unlisting sets `is_listed
 Only listed items can be added, and sellers can't add their own items.
 
 Prices are returned as JSON numbers (e.g. `12.5`).
+
+### Orders
+
+| Method | Path                   | SQL             | Purpose                                            |
+| ------ | ---------------------- | --------------- | -------------------------------------------------- |
+| POST   | `/users/{id}/checkout` | INSERT + DELETE | Turn the cart into orders and empty the cart       |
+| GET    | `/users/{id}/orders`   | SELECT          | The buyer's order history, sorted newest first     |
+| GET    | `/sellers/{id}/orders` | SELECT          | Orders for the seller's items, sorted newest first |
+| PATCH  | `/orders/{id}`         | UPDATE          | Change `order_status`                              |
+
+Each cart item becomes one order. `total` is the price at checkout, so later price changes don't affect it.
+
+### Payment cards
+
+| Method | Path                         | SQL             | Purpose                                                  |
+| ------ | ---------------------------- | --------------- | -------------------------------------------------------- |
+| POST   | `/users/{id}/cards`          | INSERT          | Add a card (links to it if another user already has it)  |
+| GET    | `/users/{id}/cards`          | SELECT          | List the user's cards                                    |
+| PATCH  | `/users/{id}/cards/{number}` | UPDATE          | Change the CVV and/or expiration date                   |
+| DELETE | `/users/{id}/cards/{number}` | DELETE          | Remove the card (deleted only when no one else uses it)  |
+
+The CVV is never returned.
+
+### Reviews
+
+| Method | Path                  | SQL    | Purpose                          |
+| ------ | --------------------- | ------ | -------------------------------- |
+| POST   | `/items/{id}/reviews` | INSERT | Write a review (one per user)    |
+| GET    | `/items/{id}/reviews` | SELECT | List an item's reviews           |
+| PATCH  | `/reviews/{id}`       | UPDATE | Edit only the fields sent        |
+| DELETE | `/reviews/{id}`       | DELETE | Delete a review                  |

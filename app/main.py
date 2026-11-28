@@ -6,7 +6,7 @@ Main FastAPI app. It creates the app, opens/closes the DB connection pool, and r
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.db import Conn, pool
-from app.routers import cart, items, sellers, users
+from app.routers import cards, cart, items, orders, reviews, sellers, users
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,6 +20,9 @@ app.include_router(users.router)
 app.include_router(sellers.router)
 app.include_router(items.router)
 app.include_router(cart.router)
+app.include_router(orders.router)
+app.include_router(cards.router)
+app.include_router(reviews.router)
 
 @app.get("/")
 def root():

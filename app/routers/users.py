@@ -85,7 +85,7 @@ def get_user(user_id: int, conn: Conn):
 def update_user(user_id: int, body: UserUpdate, conn: Conn):
     new_hash = hash_password(body.password) if body.password is not None else None
     try:
-        # COALESCE(new, old): a field left out of the request (None) keeps its old value.
+        # COALESCE(new, old): when you leave a field left out of the update request, you keep its old value.
         # This allows handling of optional fields and only updating what needs to be updated.
         row = conn.execute(
             """
